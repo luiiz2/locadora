@@ -1,5 +1,7 @@
-filmes = ["interestelar", "transformes", "vingadores", "carros"]
-alugados = []
+from operacoesbd import *
+
+conexao = criarConexao("localhost", "root", "senha", "locadora")
+
 opcao = 0
 while opcao != 6:
     print("1 - Adicionar filme")
@@ -10,56 +12,63 @@ while opcao != 6:
     print("6 - Sair")
     opcao = int(input("Digite a opção desejada: "))
     if opcao == 1:
-        while True:
-            filme = input("Digite o nome do filme: ")
-            while filme in filmes:
+            inserirfilme = input("Digite o nome do filme: ")
+            dados = [inserirfilme]
+            comandofilme = "INSERT INTO filmes (nome) VALUES (%s)"
+            if len(listarBancoDados(conexao, "SELECT * FROM filmes WHERE nome = %s", dados)) > 0:
                 print("Filme já cadastrado")
-                filme = input("Digite o nome do filme: ")
-            filmes.append(filme)
-            print("Filme adicionado com sucesso")
-            continuar = input("Deseja adicionar outro filme? (s/n) ")
-            if continuar == "n":
-                break
-    elif opcao == 2:
-        filme = input("Digite o nome do filme: ")
-        tentativa = 0
-        while filme not in filmes:
+            else:
+                insertNoBancoDados(conexao, comandofilme, dados)
+                print("Filme cadastrado com sucesso")   
+    elif opcao == 2: 
+        filme = input("Digite o nome do filme que deseja alugar: ")
+        dados = [filme]
+        if len(listarBancoDados(conexao, "SELECT * FROM filmes WHERE nome = %s", dados)) == 0:
             print("Filme não cadastrado")
-            tentativa += 1
-            filme = input("Digite o nome do filme: ")
-            if tentativa > 3:
-                print("Número de tentativas excedido")
-                break
+            break
         else:
-            alugados.append(filme)
-            filmes.remove(filme)
+            comandoinserir = "INSERT INTO alugados (nome) VALUES (%s)"
+            insertNoBancoDados(conexao, comandoinserir, dados)
+            comandoexcluir = "DELETE FROM filmes WHERE nome = %s"
+            excluirBancoDados(conexao, comandoexcluir, dados)  
             print("Filme alugado com sucesso")
     elif opcao == 3:
         filme = input("Digite o nome do filme para devolver: ")
-        while filme not in alugados:
+        dados = [filme]
+        if len(listarBancoDados(conexao, "SELECT * FROM alugados WHERE nome = %s", dados)) == 0:
             print("Filme não alugado")
-            filme = input("Digite novamente o nome do filme para devolver: ")
-            tentativa += 1
-            if tentativa > 3:
-                print("Número de tentativas excedido")
-                break
+            break
         else:
-            alugados.remove(filme)
-            filmes.append(filme)
+            comandoinserir = "INSERT INTO filmes (nome) VALUES (%s)"
+            insertNoBancoDados(conexao, comandoinserir, dados)
+            comandoexcluir = "DELETE FROM alugados WHERE nome = %s"
+            excluirBancoDados(conexao, comandoexcluir, dados)
             print("Filme devolvido com sucesso")
+        
     elif opcao == 4:
-        for filme in filmes:
-            if len(filmes) == 0:
-                print("Não há filmes cadastrados")
-            else:
-                print(filme)
+                listarfilmes = "SELECT * FROM filmes"
+                listagem = listarBancoDados(conexao, listarfilmes)
+                if len(listagem) == 0:
+                    print("Não há filmes cadastrados")
+                else:       
+                    print("lista de filmes")
+                    contagem = 0
+                    for filme in listagem:
+                        contagem += 1
+                        print(contagem, filme[0])
     elif opcao == 5:
-        for filme in alugados:
-            if len(alugados) == 0:
-                print("Não há filmes alugados")
-            else:
-                print(filme)
+        listaralugados = "SELECT * FROM alugados"
+        listagem = listarBancoDados(conexao, listaralugados)
+        if len(listagem) == 0:
+            print("Não há filmes alugados")
+        else:
+            print("lista de filmes alugados")
+            contagem = 0
+            for filme in listagem:
+                contagem += 1
+                print(filme[0])
     elif opcao == 6:
         print("Saindo...")
+        encerrarConexao(conexao)
     else:
         print("Opção inválida")
